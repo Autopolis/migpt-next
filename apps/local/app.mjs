@@ -25,7 +25,7 @@ for (const method of ['log', 'error', 'warn', 'debug']) {
 const config = createConfig();
 const mode = process.argv[2] || 'check';
 function needAI() {
-  if (!config.openai.apiKey || !config.openai.baseURL) throw new Error('尚未配置 AI Plug 专用密钥及接口地址。');
+  if (!config.openai.apiKey || !config.openai.baseURL) throw new Error('尚未配置模型服务密钥及接口地址。');
   const url = new URL(config.openai.baseURL);
   if (url.protocol !== 'https:') throw new Error('模型接口必须使用 HTTPS。');
 }

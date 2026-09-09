@@ -1,151 +1,55 @@
-# MiGPT-Next · Autopolis 社区维护预览
-
-基于 idootop/migpt-next 的 fork。新增了在小爱音箱 mini（LX01）上验证的本地适配层：无前缀问答、减少抢话、语音开关连续对话、播报结束后唤醒和 macOS 后台管理。
-
-- **从这里开始：[本地助手使用说明](apps/local/README.md)**
-- [实机验证范围](docs/LX01_VALIDATION.md) · [后续路线图](docs/ROADMAP.md) · [许可证文本说明](docs/LICENSING_NOTES.md)
-- AI Plug 是维护方运营的可选模型服务，支持替换为其他兼容服务；完整的傻瓜式配置向导仍在规划中。
-
-以下保留上游项目说明及归档公告。
-
----
-
-> [!WARNING]
-> 本项目已停止维护，不再提供更新与支持，感谢大家的使用。
-
 # MiGPT-Next
 
-`MiGPT-Next` 是基于 [MiGPT](https://github.com/idootop/mi-gpt) 的升级版本，支持**​ 自定义消息回复 ​**。
+让小爱音箱接入大模型，支持直接提问和连续对话。
 
-让人人都可以轻松定制自己的小爱音箱回复，让小爱音箱「听你的」。
+本项目是基于 [idootop/migpt-next](https://github.com/idootop/migpt-next) 的开源非商业社区版本。原项目已归档，本版本增加了小爱音箱 mini（LX01）的本地运行示例、连续对话和配置工具。
 
-## Docker 运行
+## 开始使用
 
-[![Docker Image Version](https://img.shields.io/docker/v/idootop/migpt-next?color=%23086DCD&label=docker%20image)](https://hub.docker.com/r/idootop/migpt-next)
+目前已实测的组合是 **小爱音箱 mini（LX01）+ macOS + Node.js 24**。其他型号和运行环境请先完成设备与播报测试。
 
-首先，克隆仓库代码到本地。
-
-```shell
-# 克隆代码
-git clone https://github.com/idootop/migpt-next.git
-
-# 进入配置文件所在目录
-cd migpt-next/apps/example
+```sh
+git clone https://github.com/Autopolis/migpt-next.git
+cd migpt-next/apps/local
+npm ci
+cp .env.example .env
+npm run setup
 ```
 
-然后把 `config.js` 文件里的配置修改成你自己的。
+按终端显示的地址打开本地配置页，保存账号和模型密钥，再选择音箱并测试出声。详细步骤见 **[本地助手使用说明](apps/local/README.md)**。
 
-> [!TIP]
-> 完整的参数配置（如自定义大模型请求 headers 等） 👉 请到[此处](apps/next/README.md)查看。
+- [LX01 实测结果与兼容范围](docs/LX01_VALIDATION.md)
+- [后续功能](docs/ROADMAP.md)
+- [小米登录验证说明](https://github.com/idootop/migpt-next/issues/4)
 
-```js
-export default {
-  speaker: {
-    userId: "123456",
-    password: "xxxxxxxx",
-    did: "Xiaomi 智能音箱 Pro",
-  },
-  openai: {
-    model: "gpt-4.1-mini",
-    baseURL: "https://api.openai.com/v1",
-    apiKey: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  },
-  prompt: {
-    system: "你是一个智能助手，请根据用户的问题给出回答。",
-  },
-  async onMessage(engine, { text }) {
-    if (text === "测试") {
-      return { text: "你好，很高兴认识你！" };
-    }
-  },
-};
-```
+## 可以做什么
 
-修改好 `config.js` 配置文件之后，Docker 一键运行。
+- 直接向音箱提问，不用在每句话前加“请问”。
+- 用“打开连续对话”进入连续问答，回答结束后自动唤醒一次，供继续追问。
+- 用“结束连续对话”退出自动续听，用“切回小爱”恢复原生问答。
+- 请求模型前尽早暂停原生回答，减少小爱和模型先后说两遍的情况。
+- 保留常见音乐、音量、闹钟和家电控制口令。
+- 分别测试模型连接、设备状态和语音播报，支持本地代理与 macOS 后台运行。
 
-```shell
-docker run -it --rm -v $(pwd)/config.js:/app/config.js idootop/migpt-next:latest
-```
+配置页不回显密码和密钥；显示“已保存”后，输入框留空会保留原值。
 
-## Node.js 运行
+## 使用前了解
 
-[![npm version](https://badge.fury.io/js/@mi-gpt%2Fnext.svg)](https://www.npmjs.com/package/@mi-gpt/next)
+程序运行在电脑上，语音识别和设备控制仍依赖小米云端接口，模型调用依赖所配置的 API 服务。电脑需要保持开机联网，模型服务可能按调用计费。
 
-首先，在你的项目里安装 `@mi-gpt/next` 依赖
+连续对话是在确认播报结束后再次唤醒音箱，不是刷机，也不是所有机型的原生连续对话功能。小米云端返回问题存在延迟，因此仍可能听到原生小爱先说出少量字词。
 
-```shell
-pnpm install @mi-gpt/next
-```
+目前提供命令行启动和本地凭证表单，还没有免安装运行时的图形安装包。
 
-```typescript
-import { MiGPT } from "@mi-gpt/next";
+## 模型接口
 
-async function main() {
-  await MiGPT.start({
-    speaker: {
-      userId: "123456",
-      password: "xxxxxxxx",
-      did: "Xiaomi 智能音箱 Pro",
-    },
-    openai: {
-      model: "gpt-4o-mini",
-      baseURL: "https://api.openai.com/v1",
-      apiKey: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    },
-    prompt: {
-      system: "你是一个智能助手，请根据用户的问题给出回答。",
-    },
-    async onMessage(engine, { text }) {
-      if (text === "测试") {
-        return { text: "你好，很高兴认识你！" };
-      }
-    },
-  });
-  process.exit(0);
-}
+支持配置兼容 OpenAI Chat Completions 的接口、密钥和模型，配置方法见[模型服务设置](apps/local/README.md#模型服务)。
 
-main();
-```
+如果需要模型 API，也可以试试 [AI Plug](https://aiplug.work/)（维护者提供的可选服务）。
 
-## 常见问题
+## 原有接入方式
 
-### Q：一直提示登录失败，无法正常运行？
-
-一般是因为登录小米账号时触发了安全验证，可以参考此处解决：https://github.com/idootop/migpt-next/issues/4
-
-### Q：小爱同学总是抢话，能不能在 AI 回答的时候让小爱同学闭嘴？
-
-> [!TIP]
-> 如果你想要让小爱同学立即闭嘴，必须要刷机才能解决。相关教程请移步 👉 [Open-XiaoAI](https://github.com/idootop/open-xiaoai)
-
-`MiGPT-Next` 的实现方式和 `MiGPT` 相同，都是走 API 请求：
-
-- 响应延迟较大，难以打断小爱原有回复
-- TTS 偶发失效，设备状态获取失败可能导致回复中断
-
-基于上述原因，在新版 `MiGPT-Next` 中移除了对**连续对话**/流式响应功能的支持。
-
-### Q：控制台能看到 AI 的回答文字，但是播放的还是小爱自己的回答？
-
-`MiGPT-Next` 移除了 `ttsCommand` 参数，如果你是小爱音箱 Play（增强版）等机型，升级之后可能会出现 TTS 异常（听不到大模型的回复），你可以修改 `config.js` 文件里的 `onMessage` 函数来修复此问题：
-
-```js
-/**
- * 自定义消息回复
- */
-async onMessage(engine, msg) {
-  if (engine.config.callAIKeywords.some((e) => msg.text.startsWith(e))) {
-    // 打断原来小爱的回复
-    await engine.speaker.abortXiaoAI();
-    // 调用 AI 回答
-    const { text } = await engine.askAI(msg);
-    console.log(`🔊 ${text}`);
-    // TTS 播放文字
-    await engine.MiOT.doAction(5, 1, text); // 👈 注意把 5,1 换成你的设备 ttsCommand
-    return { handled: true };
-  }
-}
-```
+上游的 [Node.js / Docker 示例](apps/example)和各个 [packages](packages) 仍然保留；本版本的无前缀问答、连续对话和配置工具入口在 `apps/local`，使用其他入口不会自动启用这些功能。
 
 ## 免责声明
 
@@ -159,3 +63,5 @@ async onMessage(engine, msg) {
 ## License
 
 MIT License © 2024-PRESENT [Del Wang](https://del.wang)
+
+社区维护与实践记录：[Shawn](https://shawn.reapp.top)。

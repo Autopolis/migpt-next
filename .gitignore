@@ -37,3 +37,13 @@ yarn-error.log*
 .DS_Store
 *.pem
 .mi.json
+
+# Local speaker runtime state
+**/logs/
+*.pid
+.env.*
+!.env.example
+
+# Python setup helper
+__pycache__/
+*.py[cod]

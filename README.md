@@ -1,3 +1,15 @@
+# MiGPT-Next · Autopolis 社区维护预览
+
+基于 idootop/migpt-next 的 fork。新增了在小爱音箱 mini（LX01）上验证的本地适配层：无前缀问答、减少抢话、语音开关连续对话、播报结束后唤醒和 macOS 后台管理。
+
+- **从这里开始：[本地助手使用说明](apps/local/README.md)**
+- [实机验证范围](docs/LX01_VALIDATION.md) · [后续路线图](docs/ROADMAP.md) · [许可证文本说明](docs/LICENSING_NOTES.md)
+- AI Plug 是维护方运营的可选模型服务，支持替换为其他兼容服务；完整的傻瓜式配置向导仍在规划中。
+
+以下保留上游项目说明及归档公告。
+
+---
+
 > [!WARNING]
 > 本项目已停止维护，不再提供更新与支持，感谢大家的使用。
 

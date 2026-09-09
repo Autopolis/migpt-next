@@ -1,0 +1,27 @@
+name: Local assistant checks
+on:
+  push:
+    paths: ['apps/local/**', '.github/workflows/local-assistant.yml']
+  pull_request:
+    paths: ['apps/local/**', '.github/workflows/local-assistant.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/local/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: python -m unittest discover -s test -p 'test_*.py'

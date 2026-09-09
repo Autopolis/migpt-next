@@ -1,0 +1,26 @@
+{
+  "name": "@autopolis/migpt-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node app.mjs check",
+    "devices": "node app.mjs devices",
+    "probe": "node app.mjs probe",
+    "test-ai": "node app.mjs test-ai",
+    "test-tts": "node app.mjs test-tts",
+    "start": "node app.mjs start",
+    "test": "node --test test/*.test.mjs",
+    "setup": "python3 setup.py",
+    "service": "node macos-service.mjs"
+  },
+  "dependencies": {
+    "@mi-gpt/chat": "1.1.1",
+    "@mi-gpt/miot": "1.2.2",
+    "@mi-gpt/next": "1.3.2",
+    "@mi-gpt/openai": "1.1.1"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}

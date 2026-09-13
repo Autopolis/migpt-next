@@ -87,9 +87,11 @@ async function main() {
     needAI(); needXiaomi();
     const { MiGPT } = await import('@mi-gpt/next');
     const { ChatBot } = await import('@mi-gpt/chat');
+    const { OpenAI } = await import('@mi-gpt/openai');
     config.onMessage = createMessageHandler(parseTTSCommand(process.env.MI_TTS_COMMAND), {
       continuous: process.env.MI_CONTINUOUS_DIALOGUE === '1',
       resetContext: () => { ChatBot.history = []; },
+      cancelRequest: id => OpenAI.cancel(id),
     });
     process.on('SIGINT', async () => { await MiGPT.stop(); process.exit(0); });
     process.on('SIGTERM', async () => { await MiGPT.stop(); process.exit(0); });

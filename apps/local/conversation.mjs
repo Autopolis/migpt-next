@@ -40,6 +40,7 @@ export function createConversationHandler(speak, command, options = {}) {
   const resetContext = options.resetContext || (() => {});
   const waitForEnd = options.waitForEnd || waitForSpeechEnd;
   return async (engine, msg) => {
+    const started = now();
     const generation = ++state.generation;
     const current = () => generation === state.generation && engine.status === 'running' && engine.lastMsg?.id === msg.id;
     const plain = normalize(msg.text || '');
@@ -66,21 +67,46 @@ export function createConversationHandler(speak, command, options = {}) {
       return handled;
     }
 
-    const started = now();
-    try {
-      const paused = await engine.MiNA.pause();
-      console.log(`原生回答暂停请求：${paused ? '已接受' : '未接受'}。`);
-    } catch { console.warn('原生回答暂停失败，继续处理。'); }
-    if (!current()) return handled;
+    // Include time spent waiting for Xiaomi's conversation record.
+    const messageTime = Number.isFinite(msg.timestamp) && msg.timestamp > 0
+      ? Math.min(started, msg.timestamp) : started;
+    const deadline = messageTime + (options.replyTimeoutMs ?? 10000);
+    let expired = false;
+    const expire = () => {
+      if (expired) return;
+      expired = true;
+      try { options.cancelRequest?.(msg.id); } catch {}
+      console.log('回答超过等待时限，已取消请求并丢弃结果。');
+    };
+    const canReply = () => {
+      if (now() >= deadline) expire();
+      return !expired && current();
+    };
+    if (!canReply()) return handled;
 
-    let answer = acknowledgement;
-    if (!answer) {
-      if (state.lastQuestionAt && now() - state.lastQuestionAt > (options.contextIdleMs ?? 300000)) resetContext();
-      state.lastQuestionAt = now();
-      try { answer = (await engine.askAI(msg)).text; }
-      catch { console.error('模型请求失败。'); }
-    }
-    if (!current()) return handled;
+    let timer;
+    let answer;
+    try {
+      answer = await Promise.race([
+        new Promise(resolve => {
+          timer = setTimeout(() => { expire(); resolve(undefined); }, deadline - now());
+        }),
+        (async () => {
+          try {
+            const paused = await engine.MiNA.pause();
+            console.log(`原生回答暂停请求：${paused ? '已接受' : '未接受'}。`);
+          } catch { console.warn('原生回答暂停失败，继续处理。'); }
+          if (!canReply()) return;
+          if (acknowledgement) return acknowledgement;
+          if (state.lastQuestionAt && now() - state.lastQuestionAt > (options.contextIdleMs ?? 300000)) resetContext();
+          state.lastQuestionAt = now();
+          try { return (await engine.askAI(msg)).text; }
+          catch { if (canReply()) console.error('模型请求失败。'); }
+        })(),
+      ]);
+    } finally { clearTimeout(timer); }
+    // Check again even if a blocked event loop delayed the timeout callback.
+    if (!canReply()) return handled;
     const successful = Boolean(answer);
     answer ||= '暂时没有收到大模型的回复，请稍后再试。';
     let accepted;

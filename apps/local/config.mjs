@@ -17,7 +17,7 @@ export function createConfig(env = process.env) {
       model: env.OPENAI_MODEL || 'gpt-5.6-luna',
       enableProxy: env.MIGPT_USE_PROXY === '1' || Boolean(env.HTTPS_PROXY || env.HTTP_PROXY || env.ALL_PROXY || env.https_proxy || env.http_proxy || env.all_proxy),
       extra: {
-        clientOptions: { timeout: 30000, maxRetries: 1 },
+        clientOptions: { timeout: 10000, maxRetries: 0 },
         createParams: /^gpt-(5|6)/.test(env.OPENAI_MODEL || 'gpt-5.6-luna')
           ? {
               ...((env.OPENAI_REASONING_EFFORT || (env.OPENAI_MODEL || 'gpt-5.6-luna') === 'gpt-5.6-luna')
